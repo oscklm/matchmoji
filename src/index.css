@@ -1,0 +1,82 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ---- Card flip ---- */
+.flip {
+  perspective: 1000px;
+}
+.flip-inner {
+  position: absolute;
+  inset: 0;
+  transition: transform 160ms ease;
+  transform-style: preserve-3d;
+}
+.flip-inner.is-up {
+  transform: rotateY(180deg);
+}
+.flip-inner.is-matched {
+  opacity: 0;
+  transform: scale(0.6) rotateY(180deg);
+  transition: opacity 260ms ease, transform 260ms ease;
+  pointer-events: none;
+}
+.face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.face-front {
+  transform: rotateY(180deg);
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-pop {
+  animation: pop 220ms ease-out;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-34px);
+    opacity: 0;
+  }
+}
+.animate-float {
+  animation: floatUp 700ms ease-out forwards;
+}
