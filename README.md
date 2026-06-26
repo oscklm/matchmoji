@@ -24,3 +24,4 @@ Point Dokploy at this compose file. The server serves the built client and Socke
 
 ## Scaling note
 One Node process handles thousands of concurrent players for this workload. State is in-memory (single instance). To scale horizontally later: add `@socket.io/redis-adapter` and move room state to Redis. The wire protocol is client-agnostic, so the backend is swappable (e.g. Rust `socketioxide`) with no client changes.
+# matchmoji
