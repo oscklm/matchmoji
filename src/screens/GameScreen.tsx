@@ -19,7 +19,7 @@ interface Props {
 
 export function GameScreen({ config, me, players, view, endTime, countdown, onFlip, onQuit }: Props) {
   return (
-    <div className="relative flex w-full max-w-xl flex-col items-center gap-4">
+    <div className="relative flex min-h-0 w-full max-w-xl flex-1 flex-col items-center gap-4">
       <div className="flex w-full items-center justify-between">
         <span className="text-lg font-black uppercase tracking-widest">
           {config.rainbow ? <RainbowText text={config.label} /> : config.label}
@@ -39,7 +39,11 @@ export function GameScreen({ config, me, players, view, endTime, countdown, onFl
         me={me}
       />
 
-      {view && <Board view={view} config={config} locked={countdown !== null} onFlip={onFlip} />}
+      {view && (
+        <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
+          <Board view={view} config={config} locked={countdown !== null} onFlip={onFlip} />
+        </div>
+      )}
 
       {countdown !== null && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#faf9f6]">

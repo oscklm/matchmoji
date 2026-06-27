@@ -9,7 +9,7 @@ export interface SpOutcome {
   reason: 'cleared' | 'timeup' | 'nomoves'
 }
 
-export function useSingleplayer(difficulty: Difficulty, me: string, skipCountdown = false) {
+export function useSingleplayer(difficulty: Difficulty, me: string, showCountdown = true) {
   const config = DIFFICULTIES[difficulty]
   const coreRef = useRef<GameCore | null>(null)
   const overRef = useRef(false)
@@ -27,9 +27,9 @@ export function useSingleplayer(difficulty: Difficulty, me: string, skipCountdow
     setOver(null)
     setView(core.viewFor(me))
     setEndTime(0)
-    setCountdown(skipCountdown ? 0 : 3)
+    setCountdown(showCountdown ? 3 : 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficulty, me, skipCountdown])
+  }, [difficulty, me, showCountdown])
 
   useEffect(() => {
     start()

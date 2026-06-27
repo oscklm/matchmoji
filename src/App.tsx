@@ -10,12 +10,12 @@ import { Results } from './screens/Results'
 
 type Route =
   | { kind: 'home' }
-  | { kind: 'sp'; difficulty: Difficulty; skipCountdown: boolean }
+  | { kind: 'sp'; difficulty: Difficulty; showCountdown: boolean }
   | { kind: 'mp'; difficulty: Difficulty }
 
 function Stage({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-full flex-col items-center p-4 pt-8 sm:pt-12">{children}</div>
+    <div className="flex h-full flex-col items-center overflow-y-auto p-4 pt-8 sm:pt-12">{children}</div>
   )
 }
 
@@ -32,7 +32,7 @@ export function App() {
       <Stage>
         <SinglePlayerFlow
           difficulty={route.difficulty}
-          skipCountdown={route.skipCountdown}
+          showCountdown={route.showCountdown}
           me={me}
           onHome={goHome}
         />
@@ -53,7 +53,7 @@ export function App() {
       <Home
         name={name}
         onName={onName}
-        onSolo={(d, skipCountdown) => setRoute({ kind: 'sp', difficulty: d, skipCountdown })}
+        onSolo={(d, showCountdown) => setRoute({ kind: 'sp', difficulty: d, showCountdown })}
         onMultiplayer={(d) => setRoute({ kind: 'mp', difficulty: d })}
       />
     </Stage>
@@ -62,16 +62,16 @@ export function App() {
 
 function SinglePlayerFlow({
   difficulty,
-  skipCountdown,
+  showCountdown,
   me,
   onHome,
 }: {
   difficulty: Difficulty
-  skipCountdown: boolean
+  showCountdown: boolean
   me: string
   onHome: () => void
 }) {
-  const sp = useSingleplayer(difficulty, me, skipCountdown)
+  const sp = useSingleplayer(difficulty, me, showCountdown)
 
   if (sp.over) {
     return (

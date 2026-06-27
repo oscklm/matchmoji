@@ -21,7 +21,7 @@ export function Card({ card, mine, disabled, onClick }: Props) {
           <img src="/logo-stamp.svg" alt="" draggable={false} aria-hidden className="w-2/5 object-contain opacity-10" />
         </div>
         <div
-          className={`face face-front bg-white text-[clamp(1.2rem,6vw,2.4rem)] ${
+          className={`face face-front bg-white text-[clamp(1.6rem,7.8vw,3.1rem)] ${
             mine ? 'border-[3px] border-black' : 'border border-neutral-300'
           }`}
         >

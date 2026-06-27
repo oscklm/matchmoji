@@ -1,5 +1,5 @@
 import type { DifficultyConfig } from './difficulty'
-import { poolFor } from './emojis'
+import { pickEmojis } from './emojis'
 
 export interface Card {
   id: number
@@ -31,7 +31,7 @@ export type FlipResult =
 
 export const MATCH_BASE = 100
 export const STREAK_STEP = 50
-export const FLIP_BACK_MS = 500
+export const FLIP_BACK_MS = 300
 
 export function scoreForMatch(combo: number): number {
   return MATCH_BASE + Math.max(0, combo - 1) * STREAK_STEP
@@ -46,7 +46,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function makeBoard(config: DifficultyConfig): Card[] {
-  const chosen = shuffle([...poolFor(config.pool)]).slice(0, config.pairs)
+  const chosen = pickEmojis(config.pool, config.pairs)
   const cards: Card[] = []
   for (const emoji of chosen) {
     cards.push({ id: -1, emoji, matched: false })

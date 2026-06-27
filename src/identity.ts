@@ -2,6 +2,16 @@ import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generato
 
 const DEVICE_KEY = 'matchmoji:deviceId'
 const NAME_KEY = 'matchmoji:name'
+const COUNTDOWN_KEY = 'matchmoji:showCountdown'
+
+export function getShowCountdown(): boolean {
+  return localStorage.getItem(COUNTDOWN_KEY) !== 'false'
+}
+
+export function saveShowCountdown(show: boolean): boolean {
+  localStorage.setItem(COUNTDOWN_KEY, String(show))
+  return show
+}
 
 export function getDeviceId(): string {
   let id = localStorage.getItem(DEVICE_KEY)

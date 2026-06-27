@@ -1,11 +1,10 @@
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'zoomer'
 
-export type Pool = 'distinct' | 'mixed' | 'lookalike'
+export type Pool = 'distinct' | 'mixed' | 'lookalike' | 'chaos'
 
 export interface DifficultyConfig {
   key: Difficulty
   label: string
-  blurb: string
   pairs: number
   cols: number
   timer: number // seconds
@@ -18,42 +17,38 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   easy: {
     key: 'easy',
     label: 'Easy',
-    blurb: 'Distinct emojis. Unlimited flips, just the clock.',
     pairs: 6,
     cols: 4,
-    timer: 90,
+    timer: 55,
     moves: null,
     pool: 'distinct',
   },
   medium: {
     key: 'medium',
     label: 'Medium',
-    blurb: 'A few lookalikes. Limited moves — no spamming.',
     pairs: 8,
     cols: 4,
-    timer: 70,
+    timer: 45,
     moves: 14,
     pool: 'mixed',
   },
   hard: {
     key: 'hard',
     label: 'Hard',
-    blurb: 'Lookalikes everywhere. Tight clock, tighter moves.',
     pairs: 10,
     cols: 5,
-    timer: 55,
+    timer: 40,
     moves: 15,
     pool: 'lookalike',
   },
   zoomer: {
     key: 'zoomer',
     label: 'ZOOMER',
-    blurb: 'All smileys. 40 seconds. Reflexes only. Not for boomers.',
-    pairs: 12,
-    cols: 6,
-    timer: 40,
-    moves: 17,
-    pool: 'lookalike',
+    pairs: 14,
+    cols: 7,
+    timer: 48,
+    moves: 19,
+    pool: 'chaos',
     rainbow: true,
   },
 }
