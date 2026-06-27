@@ -38,6 +38,15 @@ export function Results({ outcome, me, rematchVotes, onPlayAgain, onRematch, onH
         <div>
           <div className="text-7xl font-black tabular-nums">{outcome.score}</div>
           <div className="text-sm font-black uppercase tracking-widest text-neutral-400">points</div>
+          {outcome.isNewScore ? (
+            <div className="mt-1 text-sm font-black uppercase tracking-widest text-[#1f9d55]">
+              New best!
+            </div>
+          ) : (
+            <div className="mt-1 text-sm font-black uppercase tracking-widest text-neutral-400">
+              Best {outcome.best.score}
+            </div>
+          )}
         </div>
         <div className="flex w-full justify-center gap-8">
           <div>
@@ -48,7 +57,9 @@ export function Results({ outcome, me, rematchVotes, onPlayAgain, onRematch, onH
           </div>
           <div>
             <div className="text-3xl font-black tabular-nums">{outcome.durationSec}s</div>
-            <div className="text-xs font-black uppercase tracking-widest text-neutral-400">time</div>
+            <div className="text-xs font-black uppercase tracking-widest text-neutral-400">
+              {outcome.isNewTime ? 'best time!' : 'time'}
+            </div>
           </div>
         </div>
         <div className="grid w-full gap-2">

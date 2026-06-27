@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { PlayerInfo } from '../net/useMultiplayer'
+import type { Highscore } from '../highscores'
 
 interface Props {
   endTime: number
@@ -9,6 +10,7 @@ interface Props {
   combos: Record<string, number>
   movesLeft: Record<string, number | null>
   me: string
+  highscore?: Highscore
 }
 
 function useTick(active: boolean) {
@@ -24,7 +26,7 @@ function Cap({ children, className = '' }: { children: React.ReactNode; classNam
   return <div className={`text-xs font-black uppercase tracking-widest text-neutral-400 ${className}`}>{children}</div>
 }
 
-export function Hud({ endTime, totalSeconds, players, scores, combos, movesLeft, me }: Props) {
+export function Hud({ endTime, totalSeconds, players, scores, combos, movesLeft, me, highscore }: Props) {
   useTick(endTime > 0)
   const remainingMs = Math.max(0, endTime - Date.now())
   const remaining = Math.ceil(remainingMs / 1000)
@@ -45,6 +47,9 @@ export function Hud({ endTime, totalSeconds, players, scores, combos, movesLeft,
           {myMoves} moves left
         </div>
       )}
+      {solo && highscore && highscore.time > 0 && (
+        <div className="text-sm font-black text-neutral-500">Best {highscore.time}s</div>
+      )}
     </div>
   )
 
@@ -55,6 +60,9 @@ export function Hud({ endTime, totalSeconds, players, scores, combos, movesLeft,
           <div>
             <Cap>Score</Cap>
             <div className="text-6xl font-black leading-none tabular-nums">{scores[me] ?? 0}</div>
+            {highscore && highscore.score > 0 && (
+              <div className="text-sm font-black text-neutral-500">Best {highscore.score}</div>
+            )}
           </div>
           {time}
         </div>

@@ -94,6 +94,7 @@ function SinglePlayerFlow({
       view={sp.view}
       endTime={sp.endTime}
       countdown={sp.countdown}
+      highscore={sp.highscore}
       onFlip={sp.flip}
       onQuit={onHome}
     />

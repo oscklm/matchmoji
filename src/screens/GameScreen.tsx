@@ -5,6 +5,7 @@ import { Board } from '../components/Board'
 import { Hud } from '../components/Hud'
 import { RainbowText } from '../components/RainbowText'
 import { Button } from '../ui/Button'
+import type { Highscore } from '../highscores'
 
 interface Props {
   config: DifficultyConfig
@@ -13,11 +14,12 @@ interface Props {
   view: PublicView | null
   endTime: number
   countdown: number | null
+  highscore?: Highscore
   onFlip: (id: number) => void
   onQuit: () => void
 }
 
-export function GameScreen({ config, me, players, view, endTime, countdown, onFlip, onQuit }: Props) {
+export function GameScreen({ config, me, players, view, endTime, countdown, highscore, onFlip, onQuit }: Props) {
   return (
     <div className="relative flex min-h-0 w-full max-w-xl flex-1 flex-col items-center gap-4">
       <div className="flex w-full items-center justify-between">
@@ -37,6 +39,7 @@ export function GameScreen({ config, me, players, view, endTime, countdown, onFl
         combos={view?.combos ?? {}}
         movesLeft={view?.movesLeft ?? {}}
         me={me}
+        highscore={highscore}
       />
 
       {view && (

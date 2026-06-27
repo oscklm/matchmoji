@@ -3,6 +3,7 @@ import { GameCore, FLIP_BACK_MS, type PublicView } from '../../shared/game'
 import { DIFFICULTIES, type Difficulty } from '../../shared/difficulty'
 import { comboConfetti } from '../ui/confetti'
 import { gameStarted, gameCompleted } from '../analytics'
+import { recordScore, getHighscore, type Highscore } from '../highscores'
 
 export interface SpOutcome {
   mode: 'sp'
@@ -11,6 +12,9 @@ export interface SpOutcome {
   matched: number // pairs matched
   pairs: number // total pairs
   durationSec: number
+  best: Highscore
+  isNewScore: boolean
+  isNewTime: boolean
 }
 
 export function useSingleplayer(difficulty: Difficulty, me: string, showCountdown = true) {
@@ -23,12 +27,14 @@ export function useSingleplayer(difficulty: Difficulty, me: string, showCountdow
   const [endTime, setEndTime] = useState(0)
   const [countdown, setCountdown] = useState<number | null>(3)
   const [over, setOver] = useState<SpOutcome | null>(null)
+  const [highscore, setHighscore] = useState<Highscore>(() => getHighscore(difficulty))
 
   const start = useCallback(() => {
     const core = new GameCore(config, [me])
     coreRef.current = core
     overRef.current = false
     setOver(null)
+    setHighscore(getHighscore(difficulty))
     setView(core.viewFor(me))
     setEndTime(0)
     setCountdown(showCountdown ? 3 : 0)
@@ -55,7 +61,8 @@ export function useSingleplayer(difficulty: Difficulty, me: string, showCountdow
       score,
       durationSec,
     })
-    setOver({ mode: 'sp', score, reason, matched, pairs: config.pairs, durationSec })
+    const { best, isNewScore, isNewTime } = recordScore(difficulty, score, durationSec, reason === 'cleared')
+    setOver({ mode: 'sp', score, reason, matched, pairs: config.pairs, durationSec, best, isNewScore, isNewTime })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me])
 
@@ -103,5 +110,5 @@ export function useSingleplayer(difficulty: Difficulty, me: string, showCountdow
     [countdown, me, finish],
   )
 
-  return { config, me, view, endTime, countdown, over, flip, restart: start }
+  return { config, me, view, endTime, countdown, over, highscore, flip, restart: start }
 }
