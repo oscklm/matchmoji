@@ -7,10 +7,11 @@ interface Props {
   players: PlayerInfo[]
   scores: Record<string, number>
   combos: Record<string, number>
+  movesLeft: Record<string, number | null>
   me: string
 }
 
-function useNow(active: boolean) {
+function useTick(active: boolean) {
   const [, force] = useState(0)
   useEffect(() => {
     if (!active) return
@@ -19,56 +20,71 @@ function useNow(active: boolean) {
   }, [active])
 }
 
-export function Hud({ endTime, totalSeconds, players, scores, combos, me }: Props) {
-  useNow(endTime > 0)
+function Cap({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <div className={`text-xs font-black uppercase tracking-widest text-neutral-400 ${className}`}>{children}</div>
+}
+
+export function Hud({ endTime, totalSeconds, players, scores, combos, movesLeft, me }: Props) {
+  useTick(endTime > 0)
   const remainingMs = Math.max(0, endTime - Date.now())
   const remaining = Math.ceil(remainingMs / 1000)
   const pct = Math.max(0, Math.min(100, (remainingMs / (totalSeconds * 1000)) * 100))
   const low = remaining <= 10
   const myCombo = combos[me] ?? 0
+  const myMoves = movesLeft[me]
+  const lowMoves = myMoves !== null && myMoves !== undefined && myMoves <= 3
+  const solo = players.length <= 1
+  const opp = players.find((p) => p.id !== me)
+
+  const time = (
+    <div className="text-center">
+      <Cap>Time</Cap>
+      <div className={`text-5xl font-black tabular-nums ${low ? 'text-[#e23b3b]' : 'text-black'}`}>{remaining}</div>
+      {myMoves !== null && myMoves !== undefined && (
+        <div className={`text-sm font-black ${lowMoves ? 'text-[#e23b3b]' : 'text-neutral-500'}`}>
+          {myMoves} moves left
+        </div>
+      )}
+    </div>
+  )
 
   return (
-    <div className="w-full max-w-xl space-y-3">
-      <div className="flex items-end justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {players.map((p) => {
-            const isMe = p.id === me
-            return (
-              <div
-                key={p.id}
-                className={`rounded-xl px-3 py-1.5 text-sm font-bold shadow ${
-                  isMe ? 'bg-emerald-500 text-white' : 'bg-fuchsia-500 text-white'
-                }`}
-              >
-                <span className="opacity-80">{isMe ? 'You' : p.name}</span>{' '}
-                <span className="tabular-nums">{scores[p.id] ?? 0}</span>
-              </div>
-            )
-          })}
+    <div className="w-full max-w-xl">
+      {solo ? (
+        <div className="flex items-start justify-between">
+          <div>
+            <Cap>Score</Cap>
+            <div className="text-6xl font-black leading-none tabular-nums">{scores[me] ?? 0}</div>
+          </div>
+          {time}
         </div>
-        <div
-          className={`tabular-nums text-3xl font-black ${low ? 'text-rose-400' : 'text-white'} ${
-            low ? 'animate-pulse' : ''
-          }`}
-        >
-          {remaining}
-          <span className="text-base font-bold opacity-60">s</span>
+      ) : (
+        <div className="flex items-start justify-between">
+          <div>
+            <Cap className="text-[#1f9d55]">You</Cap>
+            <div className="text-5xl font-black leading-none tabular-nums text-[#1f9d55]">{scores[me] ?? 0}</div>
+          </div>
+          {time}
+          <div className="text-right">
+            <Cap className="text-[#2b6ce4]">{opp?.name ?? 'Rival'}</Cap>
+            <div className="text-5xl font-black leading-none tabular-nums text-[#2b6ce4]">
+              {opp ? scores[opp.id] ?? 0 : 0}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="h-3 w-full overflow-hidden rounded-full bg-white/10">
+      <div className="mt-3 h-2.5 w-full bg-neutral-200">
         <div
-          className={`h-full rounded-full transition-[width] duration-100 ease-linear ${
-            low ? 'bg-rose-500' : 'bg-gradient-to-r from-emerald-400 to-cyan-400'
-          }`}
-          style={{ width: `${pct}%` }}
+          className={`h-full ${low ? 'bg-[#e23b3b]' : 'bg-[#1f9d55]'}`}
+          style={{ width: `${pct}%`, transition: 'width 100ms linear' }}
         />
       </div>
 
-      <div className="h-6 text-center">
+      <div className="mt-2 h-7 text-center">
         {myCombo >= 2 && (
-          <span className="animate-pop inline-block rounded-full bg-amber-400 px-3 py-0.5 text-sm font-black text-amber-950">
-            🔥 Combo x{myCombo}
+          <span className="animate-pop inline-block bg-black px-3 py-1 text-sm font-black text-white">
+            COMBO ×{myCombo}
           </span>
         )}
       </div>

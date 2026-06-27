@@ -10,14 +10,16 @@ export interface Card {
 export interface PublicCard {
   id: number
   matched: boolean
-  emoji: string | null // null = face down (not revealed to anyone)
+  emoji: string | null // null = face down for the viewing player
 }
 
+/** A view personalized for one player — opponent's in-progress flips are hidden. */
 export interface PublicView {
   cards: PublicCard[]
-  selections: Record<string, number[]>
+  mySelection: number[]
   scores: Record<string, number>
   combos: Record<string, number>
+  movesLeft: Record<string, number | null> // null = unlimited
 }
 
 export type FlipResult =
@@ -25,12 +27,11 @@ export type FlipResult =
   | { type: 'reveal'; playerId: string }
   | { type: 'match'; playerId: string; cards: [number, number]; gained: number; combo: number }
   | { type: 'mismatch'; playerId: string; cards: [number, number] }
-  | { type: 'stale'; playerId: string } // a card got sniped between my two picks
+  | { type: 'stale'; playerId: string }
 
 export const MATCH_BASE = 100
 export const STREAK_STEP = 50
-export const FLIP_BACK_MS = 800
-export const CLEAR_BONUS_PER_SEC = 10
+export const FLIP_BACK_MS = 500
 
 export function scoreForMatch(combo: number): number {
   return MATCH_BASE + Math.max(0, combo - 1) * STREAK_STEP
@@ -52,25 +53,26 @@ export function makeBoard(config: DifficultyConfig): Card[] {
     cards.push({ id: -1, emoji, matched: false })
   }
   shuffle(cards)
-  // Assign ids after shuffling so the array is indexable by id (board[id])
-  // while positions stay randomized.
   cards.forEach((c, i) => (c.id = i))
   return cards
 }
 
 /**
- * Framework-agnostic game engine. Owns board + per-player selections, scores
- * and combos. No timers — the caller schedules flip-back / end. Shared by the
- * singleplayer client engine and the authoritative multiplayer server.
+ * Framework-agnostic game engine. Owns board, per-player selections, scores,
+ * combos and move budgets. No timers — the caller schedules flip-back / end.
+ * Shared by the singleplayer client engine and the authoritative MP server.
  */
 export class GameCore {
   board: Card[]
   selections = new Map<string, number[]>()
   scores = new Map<string, number>()
   combos = new Map<string, number>()
+  movesUsed = new Map<string, number>()
+  readonly moveLimit: number | null
 
   constructor(public config: DifficultyConfig, playerIds: string[], board?: Card[]) {
     this.board = board ?? makeBoard(config)
+    this.moveLimit = config.moves
     for (const p of playerIds) this.addPlayer(p)
   }
 
@@ -79,17 +81,33 @@ export class GameCore {
     this.selections.set(playerId, [])
     this.scores.set(playerId, 0)
     this.combos.set(playerId, 0)
+    this.movesUsed.set(playerId, 0)
+  }
+
+  private exhausted(playerId: string): boolean {
+    return this.moveLimit !== null && (this.movesUsed.get(playerId) ?? 0) >= this.moveLimit
+  }
+
+  /** A player is finished when out of moves with nothing pending. */
+  playerDone(playerId: string): boolean {
+    return this.exhausted(playerId) && (this.selections.get(playerId)?.length ?? 0) === 0
+  }
+
+  allDone(): boolean {
+    if (this.moveLimit === null) return false
+    return [...this.selections.keys()].every((p) => this.playerDone(p))
   }
 
   flip(playerId: string, cardId: number): FlipResult {
     let sel = this.selections.get(playerId)
     if (!sel) return { type: 'noop' }
-    // Drop any of my picks that were matched (sniped) by someone else — no penalty.
+    // Drop any of my picks sniped (matched) by someone else — no penalty.
     if (sel.some((id) => this.board[id]?.matched)) {
       sel = sel.filter((id) => !this.board[id]?.matched)
       this.selections.set(playerId, sel)
     }
     if (sel.length >= 2) return { type: 'noop' } // awaiting flip-back
+    if (sel.length === 0 && this.exhausted(playerId)) return { type: 'noop' } // out of moves
     const card = this.board[cardId]
     if (!card || card.matched) return { type: 'noop' }
     if (sel.includes(cardId)) return { type: 'noop' }
@@ -101,11 +119,13 @@ export class GameCore {
     const ca = this.board[a]
     const cb = this.board[b]
 
-    // Sniped: one of my picks was matched by someone else between flips.
     if (ca.matched || cb.matched) {
       this.selections.set(playerId, [])
-      return { type: 'stale', playerId } // no combo penalty — wasn't a wrong guess
+      return { type: 'stale', playerId } // sniped between picks — doesn't cost a move
     }
+
+    // A completed pair attempt costs one move.
+    this.movesUsed.set(playerId, (this.movesUsed.get(playerId) ?? 0) + 1)
 
     if (ca.emoji === cb.emoji) {
       ca.matched = true
@@ -118,7 +138,6 @@ export class GameCore {
       return { type: 'match', playerId, cards: [a, b], gained, combo }
     }
 
-    // Wrong guess — reset combo, hold selection for the flip-back window.
     this.combos.set(playerId, 0)
     return { type: 'mismatch', playerId, cards: [a, b] }
   }
@@ -131,19 +150,28 @@ export class GameCore {
     return this.board.every((c) => c.matched)
   }
 
-  view(): PublicView {
-    const revealed = new Set<number>()
-    for (const c of this.board) if (c.matched) revealed.add(c.id)
-    for (const sel of this.selections.values()) for (const id of sel) revealed.add(id)
+  private movesLeftMap(): Record<string, number | null> {
+    const out: Record<string, number | null> = {}
+    for (const p of this.selections.keys()) {
+      out[p] = this.moveLimit === null ? null : Math.max(0, this.moveLimit - (this.movesUsed.get(p) ?? 0))
+    }
+    return out
+  }
+
+  /** Personalized view: reveals matched cards plus only THIS player's picks. */
+  viewFor(playerId: string): PublicView {
+    const mySel = this.selections.get(playerId) ?? []
+    const reveal = new Set<number>(mySel)
     return {
       cards: this.board.map((c) => ({
         id: c.id,
         matched: c.matched,
-        emoji: revealed.has(c.id) ? c.emoji : null,
+        emoji: c.matched || reveal.has(c.id) ? c.emoji : null,
       })),
-      selections: Object.fromEntries(this.selections),
+      mySelection: [...mySel],
       scores: Object.fromEntries(this.scores),
       combos: Object.fromEntries(this.combos),
+      movesLeft: this.movesLeftMap(),
     }
   }
 }

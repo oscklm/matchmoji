@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PublicView } from '../../shared/game'
 import { type Difficulty } from '../../shared/difficulty'
 import { getSocket } from './socket'
+import { comboConfetti } from '../ui/confetti'
 
 export interface PlayerInfo {
   id: string
@@ -46,12 +47,12 @@ export function useMultiplayer(me: string, name: string) {
       setPhase('countdown')
     }
     const onStart = (d: {
-      cards: PublicView['cards']
+      view: PublicView
       endTime: number
       difficulty: Difficulty
       players: PlayerInfo[]
     }) => {
-      setView({ cards: d.cards, selections: {}, scores: {}, combos: {} })
+      setView(d.view)
       setEndTime(d.endTime)
       setDifficulty(d.difficulty)
       setPlayers(d.players)
@@ -74,8 +75,10 @@ export function useMultiplayer(me: string, name: string) {
       setPhase('over')
     }
     const onRematch = (d: { votes: string[] }) => setRematchVotes(d.votes)
+    const onCombo = (d: { combo: number }) => comboConfetti(d.combo)
 
     s.on('room:update', onRoom)
+    s.on('game:combo', onCombo)
     s.on('game:countdown', onCountdown)
     s.on('game:start', onStart)
     s.on('game:state', onState)
@@ -84,6 +87,7 @@ export function useMultiplayer(me: string, name: string) {
     s.on('rematch:update', onRematch)
     return () => {
       s.off('room:update', onRoom)
+      s.off('game:combo', onCombo)
       s.off('game:countdown', onCountdown)
       s.off('game:start', onStart)
       s.off('game:state', onState)

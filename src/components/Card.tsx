@@ -3,31 +3,28 @@ import type { PublicCard } from '../../shared/game'
 interface Props {
   card: PublicCard
   mine: boolean
-  rival: boolean
   disabled: boolean
   onClick: () => void
 }
 
-export function Card({ card, mine, rival, disabled, onClick }: Props) {
+export function Card({ card, mine, disabled, onClick }: Props) {
   const up = card.emoji !== null
-  const ring = mine
-    ? 'ring-4 ring-emerald-400'
-    : rival
-      ? 'ring-4 ring-fuchsia-400'
-      : 'ring-0'
-
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flip relative aspect-square w-full rounded-2xl ${ring} transition-shadow`}
+      className="flip relative aspect-square w-full"
     >
       <div className={`flip-inner ${card.matched ? 'is-matched' : up ? 'is-up' : ''}`}>
-        <div className="face face-back bg-gradient-to-br from-indigo-500 to-violet-600 text-2xl text-white/40 shadow-lg shadow-violet-900/40">
-          <span className="select-none">★</span>
+        <div className="face bg-[#2b2d42]">
+          <img src="/logo-stamp.svg" alt="" draggable={false} aria-hidden className="w-2/5 object-contain opacity-10" />
         </div>
-        <div className="face face-front bg-slate-100 text-[clamp(1.4rem,7vw,2.6rem)] shadow-lg">
+        <div
+          className={`face face-front bg-white text-[clamp(1.2rem,6vw,2.4rem)] ${
+            mine ? 'border-[3px] border-black' : 'border border-neutral-300'
+          }`}
+        >
           <span className="animate-pop leading-none">{card.emoji}</span>
         </div>
       </div>

@@ -3,6 +3,8 @@ import type { DifficultyConfig } from '../../shared/difficulty'
 import type { PlayerInfo } from '../net/useMultiplayer'
 import { Board } from '../components/Board'
 import { Hud } from '../components/Hud'
+import { RainbowText } from '../components/RainbowText'
+import { Button } from '../ui/Button'
 
 interface Props {
   config: DifficultyConfig
@@ -17,14 +19,14 @@ interface Props {
 
 export function GameScreen({ config, me, players, view, endTime, countdown, onFlip, onQuit }: Props) {
   return (
-    <div className="relative flex w-full max-w-xl flex-col items-center gap-5">
-      <div className="flex w-full max-w-xl items-center justify-between">
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-300">
-          {config.label}
+    <div className="relative flex w-full max-w-xl flex-col items-center gap-4">
+      <div className="flex w-full items-center justify-between">
+        <span className="text-lg font-black uppercase tracking-widest">
+          {config.rainbow ? <RainbowText text={config.label} /> : config.label}
         </span>
-        <button type="button" onClick={onQuit} className="text-xs font-bold text-white/40 hover:text-white">
-          Quit ✕
-        </button>
+        <Button variant="outline" size="sm" onClick={onQuit}>
+          Quit
+        </Button>
       </div>
 
       <Hud
@@ -33,17 +35,16 @@ export function GameScreen({ config, me, players, view, endTime, countdown, onFl
         players={players}
         scores={view?.scores ?? {}}
         combos={view?.combos ?? {}}
+        movesLeft={view?.movesLeft ?? {}}
         me={me}
       />
 
-      {view && (
-        <Board view={view} config={config} me={me} locked={countdown !== null} onFlip={onFlip} />
-      )}
+      {view && <Board view={view} config={config} locked={countdown !== null} onFlip={onFlip} />}
 
       {countdown !== null && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-slate-950/70 backdrop-blur-sm">
-          <div key={countdown} className="animate-pop text-8xl font-black text-amber-300">
-            {countdown === 0 ? 'GO!' : countdown}
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#faf9f6]">
+          <div key={countdown} className="animate-pop text-8xl font-black">
+            {countdown === 0 ? 'GO' : countdown}
           </div>
         </div>
       )}

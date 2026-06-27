@@ -62,7 +62,10 @@ function roomUpdate(room: Room) {
 }
 
 function broadcastState(room: Room) {
-  if (room.game) io.to(room.code).emit('game:state', room.game.view())
+  if (!room.game) return
+  for (const p of room.players) {
+    io.to(p.socketId).emit('game:state', room.game.viewFor(p.id))
+  }
 }
 
 function startGame(room: Room) {
@@ -88,13 +91,14 @@ function startGame(room: Room) {
     room.countdownTimer = null
     const seconds = DIFFICULTIES[room.difficulty].timer
     room.endTime = Date.now() + seconds * 1000
-    io.to(room.code).emit('game:start', {
-      cards: room.game!.view().cards,
-      endTime: room.endTime,
-      difficulty: room.difficulty,
-      players: publicPlayers(room),
-    })
-    broadcastState(room)
+    for (const p of room.players) {
+      io.to(p.socketId).emit('game:start', {
+        view: room.game!.viewFor(p.id),
+        endTime: room.endTime,
+        difficulty: room.difficulty,
+        players: publicPlayers(room),
+      })
+    }
     room.timer = setTimeout(() => endGame(room), seconds * 1000)
   }, 1000)
 }
@@ -214,9 +218,13 @@ io.on('connection', (socket) => {
         if (room.game && !room.over) {
           room.game.clearSelection(res.playerId)
           broadcastState(room)
+          if (room.game.allDone()) endGame(room)
         }
       }, FLIP_BACK_MS)
-    } else if (res.type === 'match' && room.game.isComplete()) {
+    } else if (res.type === 'match') {
+      if (res.combo >= 2) io.to(socket.id).emit('game:combo', { combo: res.combo })
+      if (room.game.isComplete() || room.game.allDone()) endGame(room)
+    } else if (room.game.allDone()) {
       endGame(room)
     }
   })

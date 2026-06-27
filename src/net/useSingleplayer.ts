@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GameCore, CLEAR_BONUS_PER_SEC, FLIP_BACK_MS, type PublicView } from '../../shared/game'
+import { GameCore, FLIP_BACK_MS, type PublicView } from '../../shared/game'
 import { DIFFICULTIES, type Difficulty } from '../../shared/difficulty'
+import { comboConfetti } from '../ui/confetti'
 
 export interface SpOutcome {
   mode: 'sp'
-  result: 'cleared' | 'timeup'
   score: number
+  reason: 'cleared' | 'timeup' | 'nomoves'
 }
 
-export function useSingleplayer(difficulty: Difficulty, me: string) {
+export function useSingleplayer(difficulty: Difficulty, me: string, skipCountdown = false) {
   const config = DIFFICULTIES[difficulty]
   const coreRef = useRef<GameCore | null>(null)
   const overRef = useRef(false)
@@ -24,32 +25,23 @@ export function useSingleplayer(difficulty: Difficulty, me: string) {
     coreRef.current = core
     overRef.current = false
     setOver(null)
-    setView(core.view())
+    setView(core.viewFor(me))
     setEndTime(0)
-    setCountdown(3)
+    setCountdown(skipCountdown ? 0 : 3)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficulty, me])
+  }, [difficulty, me, skipCountdown])
 
   useEffect(() => {
     start()
   }, [start])
 
-  const finish = useCallback(
-    (result: 'cleared' | 'timeup') => {
-      if (overRef.current) return
-      overRef.current = true
-      const core = coreRef.current!
-      let score = core.scores.get(me) ?? 0
-      if (result === 'cleared') {
-        const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000))
-        score += remaining * CLEAR_BONUS_PER_SEC
-      }
-      setOver({ mode: 'sp', result, score })
-    },
-    [me],
-  )
+  const finish = useCallback((reason: SpOutcome['reason']) => {
+    if (overRef.current) return
+    overRef.current = true
+    const score = coreRef.current!.scores.get(me) ?? 0
+    setOver({ mode: 'sp', score, reason })
+  }, [me])
 
-  // Countdown 3 -> 2 -> 1 -> go
   useEffect(() => {
     if (countdown === null) return
     if (countdown === 0) {
@@ -63,7 +55,6 @@ export function useSingleplayer(difficulty: Difficulty, me: string) {
     return () => clearTimeout(t)
   }, [countdown, config.timer])
 
-  // Time-up watcher
   useEffect(() => {
     if (countdown !== null || over) return
     const iv = setInterval(() => {
@@ -78,14 +69,17 @@ export function useSingleplayer(difficulty: Difficulty, me: string) {
       if (!core || countdown !== null || overRef.current) return
       const res = core.flip(me, id)
       if (res.type === 'noop') return
-      setView(core.view())
+      setView(core.viewFor(me))
       if (res.type === 'mismatch') {
         setTimeout(() => {
           core.clearSelection(me)
-          setView(core.view())
+          setView(core.viewFor(me))
+          if (core.playerDone(me)) finish('nomoves')
         }, FLIP_BACK_MS)
-      } else if (res.type === 'match' && core.isComplete()) {
-        finish('cleared')
+      } else if (res.type === 'match') {
+        if (res.combo >= 2) comboConfetti(res.combo)
+        if (core.isComplete()) finish('cleared')
+        else if (core.playerDone(me)) finish('nomoves')
       }
     },
     [countdown, me, finish],

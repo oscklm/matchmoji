@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { DIFFICULTIES, type Difficulty } from '../../shared/difficulty'
 import type { MpPhase, PlayerInfo } from '../net/useMultiplayer'
+import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
+import { Label } from '../ui/Label'
 
 interface Props {
   phase: MpPhase
@@ -19,75 +22,62 @@ export function Lobby({ phase, code, players, difficulty, defaultDifficulty, err
 
   if (phase === 'lobby') {
     return (
-      <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
-        <p className="text-sm font-bold uppercase tracking-wider text-white/50">Share this code</p>
-        <div className="rounded-3xl bg-white/10 px-10 py-6">
-          <div className="text-6xl font-black tracking-[0.3em] text-amber-300">{code}</div>
-        </div>
-        <p className="text-sm font-semibold text-white/60">
-          {DIFFICULTIES[difficulty].label} · waiting for an opponent to join…
-        </p>
+      <div className="flex w-full max-w-md flex-col gap-6">
+        <Label>Share this code</Label>
+        <div className="border-2 border-black py-6 text-center text-6xl font-black tracking-[0.3em]">{code}</div>
+        <p className="font-bold text-neutral-600">{DIFFICULTIES[difficulty].label} · waiting for an opponent…</p>
         <div className="flex gap-2">
           {players.map((p) => (
-            <span key={p.id} className="rounded-full bg-emerald-500 px-4 py-1.5 text-sm font-bold text-white">
+            <span key={p.id} className="bg-[#1f9d55] px-3 py-1.5 text-sm font-bold text-white">
               {p.name}
             </span>
           ))}
           {players.length < 2 && (
-            <span className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-bold text-white/40">
-              empty seat…
+            <span className="border-2 border-dashed border-neutral-300 px-3 py-1.5 text-sm font-bold text-neutral-400">
+              empty seat
             </span>
           )}
         </div>
-        <button type="button" onClick={onBack} className="text-sm font-bold text-white/50 hover:text-white">
+        <Button variant="ghost" size="sm" className="self-start px-0" onClick={onBack}>
           ← Cancel
-        </button>
+        </Button>
       </div>
     )
   }
 
   return (
-    <div className="flex w-full max-w-md flex-col gap-6">
-      <h2 className="text-center text-3xl font-black text-white">Multiplayer</h2>
+    <div className="flex w-full max-w-md flex-col gap-5">
+      <h2 className="text-3xl font-black">Play 1v1</h2>
 
-      <button
-        type="button"
-        onClick={() => onCreate(defaultDifficulty)}
-        className="rounded-2xl bg-fuchsia-500 py-4 text-lg font-black text-white shadow-lg shadow-fuchsia-500/30 transition hover:bg-fuchsia-400 active:scale-[0.98]"
-      >
-        ＋ Create game ({DIFFICULTIES[defaultDifficulty].label})
-      </button>
+      <Button variant="info" size="lg" block onClick={() => onCreate(defaultDifficulty)}>
+        Create game · {DIFFICULTIES[defaultDifficulty].label}
+      </Button>
 
-      <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-white/30">
-        <div className="h-px flex-1 bg-white/10" /> or join <div className="h-px flex-1 bg-white/10" />
-      </div>
+      <Label className="text-center">or join</Label>
 
       <form
         onSubmit={(e) => {
           e.preventDefault()
           if (joinCode.trim().length >= 4) onJoin(joinCode.trim())
         }}
-        className="space-y-3"
+        className="flex flex-col gap-3"
       >
-        <input
+        <Input
+          size="lg"
+          center
           value={joinCode}
           onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 4))}
           placeholder="CODE"
-          className="w-full rounded-2xl bg-white/10 py-4 text-center text-3xl font-black tracking-[0.3em] text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-emerald-400"
         />
-        <button
-          type="submit"
-          disabled={joinCode.trim().length < 4}
-          className="w-full rounded-2xl bg-emerald-500 py-4 text-lg font-black text-white shadow-lg shadow-emerald-500/30 transition enabled:hover:bg-emerald-400 disabled:opacity-40"
-        >
+        <Button type="submit" variant="dark" size="lg" block disabled={joinCode.trim().length < 4}>
           Join game
-        </button>
-        {error && <p className="text-center text-sm font-bold text-rose-400">{error}</p>}
+        </Button>
+        {error && <p className="font-bold text-[#e23b3b]">{error}</p>}
       </form>
 
-      <button type="button" onClick={onBack} className="text-sm font-bold text-white/50 hover:text-white">
+      <Button variant="ghost" size="sm" className="self-start px-0" onClick={onBack}>
         ← Back
-      </button>
+      </Button>
     </div>
   )
 }

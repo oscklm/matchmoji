@@ -1,9 +1,5 @@
 @import 'tailwindcss';
 
-:root {
-  color-scheme: dark;
-}
-
 html,
 body,
 #root {
@@ -12,28 +8,29 @@ body,
 
 body {
   margin: 0;
-  font-family: ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  background: #faf9f6;
+  color: #111111;
+  font-family: Helvetica, Arial, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 
-/* ---- Card flip ---- */
+/* ---- Card flip (no shadows / gradients) ---- */
 .flip {
-  perspective: 1000px;
+  perspective: 900px;
 }
 .flip-inner {
   position: absolute;
   inset: 0;
-  transition: transform 160ms ease;
+  transition: transform 150ms ease;
   transform-style: preserve-3d;
 }
 .flip-inner.is-up {
   transform: rotateY(180deg);
 }
 .flip-inner.is-matched {
-  opacity: 0;
-  transform: scale(0.6) rotateY(180deg);
-  transition: opacity 260ms ease, transform 260ms ease;
+  transform: scale(0);
+  transition: transform 200ms ease;
   pointer-events: none;
 }
 .face {
@@ -42,7 +39,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.85rem;
+  border-radius: 10px;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
@@ -52,31 +49,15 @@ body {
 
 @keyframes pop {
   0% {
-    transform: scale(0.6);
-    opacity: 0;
+    transform: scale(0.7);
   }
   60% {
-    transform: scale(1.15);
+    transform: scale(1.12);
   }
   100% {
     transform: scale(1);
-    opacity: 1;
   }
 }
 .animate-pop {
-  animation: pop 220ms ease-out;
-}
-
-@keyframes floatUp {
-  0% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-34px);
-    opacity: 0;
-  }
-}
-.animate-float {
-  animation: floatUp 700ms ease-out forwards;
+  animation: pop 200ms ease-out;
 }

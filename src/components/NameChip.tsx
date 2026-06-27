@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Icons } from './Icons'
+import { Input } from '../ui/Input'
 
 interface Props {
   name: string
@@ -6,50 +8,27 @@ interface Props {
 }
 
 export function NameChip({ name, onChange }: Props) {
-  const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
 
-  const commit = () => {
-    onChange(draft)
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-2">
-        <input
-          autoFocus
-          value={draft}
-          maxLength={24}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit()
-            if (e.key === 'Escape') setEditing(false)
-          }}
-          className="w-44 rounded-full bg-white/10 px-4 py-1.5 text-center font-bold text-white outline-none ring-2 ring-emerald-400"
-        />
-        <button
-          type="button"
-          onClick={commit}
-          className="rounded-full bg-emerald-500 px-3 py-1.5 text-sm font-bold text-white"
-        >
-          OK
-        </button>
-      </div>
-    )
-  }
+  useEffect(() => setDraft(name), [name])
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(name)
-        setEditing(true)
-      }}
-      className="group flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 font-bold text-white transition hover:bg-white/15"
-    >
-      <span>{name}</span>
-      <span className="text-xs opacity-50 group-hover:opacity-90">✎</span>
-    </button>
+    <div className="relative w-full max-w-xs">
+      <Input
+        value={draft}
+        placeholder="Your name"
+        maxLength={24}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => onChange(draft)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur()
+        }}
+        className="border-neutral-300 pr-9 text-neutral-500 transition-colors focus:border-black focus:text-black"
+      />
+      <Icons.Edit
+        size={15}
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400"
+      />
+    </div>
   )
 }
