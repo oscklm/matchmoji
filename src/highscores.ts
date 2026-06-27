@@ -7,7 +7,7 @@ export interface Highscore {
   time: number // fastest clear in seconds; 0 = none yet
 }
 
-type Store = Partial<Record<Difficulty, Highscore>>
+export type Store = Partial<Record<Difficulty, Highscore>>
 
 function coerce(v: unknown): Highscore {
   if (typeof v === 'number') return { score: v, time: 0 }
@@ -31,6 +31,10 @@ function read(): Store {
 
 export function getHighscore(difficulty: Difficulty): Highscore {
   return read()[difficulty] ?? { score: 0, time: 0 }
+}
+
+export function getAllHighscores(): Store {
+  return read()
 }
 
 // Records a result, returns the previous best and whether each was beaten.
