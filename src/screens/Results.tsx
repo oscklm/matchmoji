@@ -13,10 +13,16 @@ interface Props {
   onHome: () => void
 }
 
-const SP_TITLE: Record<SpOutcome['reason'], string> = {
-  cleared: 'Board cleared!',
-  timeup: "Time's up",
-  nomoves: 'Out of moves',
+function ResultBadge({ won }: { won: boolean }) {
+  return (
+    <div
+      className={`px-6 py-2 text-4xl font-black uppercase tracking-tight text-white ${
+        won ? 'bg-[#1f9d55]' : 'bg-[#e23b3b]'
+      }`}
+    >
+      {won ? 'You win' : 'You lose'}
+    </div>
+  )
 }
 
 export function Results({ outcome, me, rematchVotes, onPlayAgain, onRematch, onHome }: Props) {
@@ -27,11 +33,23 @@ export function Results({ outcome, me, rematchVotes, onPlayAgain, onRematch, onH
 
   if (outcome.mode === 'sp') {
     return (
-      <div className="flex w-full max-w-sm flex-col items-center gap-5 text-center">
-        <h2 className="text-4xl font-black">{SP_TITLE[outcome.reason]}</h2>
+      <div className="my-auto flex w-full max-w-sm flex-col items-center gap-5 text-center">
+        <ResultBadge won={didWin} />
         <div>
           <div className="text-7xl font-black tabular-nums">{outcome.score}</div>
           <div className="text-sm font-black uppercase tracking-widest text-neutral-400">points</div>
+        </div>
+        <div className="flex w-full justify-center gap-8">
+          <div>
+            <div className="text-3xl font-black tabular-nums">
+              {outcome.matched}/{outcome.pairs}
+            </div>
+            <div className="text-xs font-black uppercase tracking-widest text-neutral-400">pairs</div>
+          </div>
+          <div>
+            <div className="text-3xl font-black tabular-nums">{outcome.durationSec}s</div>
+            <div className="text-xs font-black uppercase tracking-widest text-neutral-400">time</div>
+          </div>
         </div>
         <div className="grid w-full gap-2">
           <Button variant="primary" size="lg" block onClick={onPlayAgain}>
@@ -54,7 +72,7 @@ export function Results({ outcome, me, rematchVotes, onPlayAgain, onRematch, onH
   const iVoted = rematchVotes.includes(me)
 
   return (
-    <div className="flex w-full max-w-sm flex-col items-center gap-5 text-center">
+    <div className="my-auto flex w-full max-w-sm flex-col items-center gap-5 text-center">
       <h2 className="text-4xl font-black">{title}</h2>
 
       <div className="flex items-end justify-center gap-8">

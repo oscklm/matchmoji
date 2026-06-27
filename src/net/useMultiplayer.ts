@@ -3,6 +3,7 @@ import type { PublicView } from '../../shared/game'
 import { type Difficulty } from '../../shared/difficulty'
 import { getSocket } from './socket'
 import { comboConfetti } from '../ui/confetti'
+import { gameStarted, gameCompleted } from '../analytics'
 
 export interface PlayerInfo {
   id: string
@@ -32,6 +33,8 @@ export function useMultiplayer(me: string, name: string) {
   const [rematchVotes, setRematchVotes] = useState<string[]>([])
   const nameRef = useRef(name)
   nameRef.current = name
+  const startTimeRef = useRef(0)
+  const difficultyRef = useRef<Difficulty>('easy')
 
   useEffect(() => {
     const s = getSocket()
@@ -58,11 +61,22 @@ export function useMultiplayer(me: string, name: string) {
       setPlayers(d.players)
       setCountdown(null)
       setPhase('playing')
+      startTimeRef.current = Date.now()
+      difficultyRef.current = d.difficulty
+      gameStarted({ mode: 'mp', difficulty: d.difficulty })
     }
     const onState = (v: PublicView) => setView(v)
     const onOver = (d: { scores: Record<string, number>; winner: string | 'tie'; players: PlayerInfo[] }) => {
       setOver({ mode: 'mp', scores: d.scores, winner: d.winner, players: d.players })
       setPhase('over')
+      gameCompleted({
+        mode: 'mp',
+        difficulty: difficultyRef.current,
+        outcome: d.winner === 'tie' ? 'tie' : d.winner === me ? 'win' : 'lose',
+        won: d.winner === me,
+        score: d.scores[me] ?? 0,
+        durationSec: Math.round((Date.now() - startTimeRef.current) / 1000),
+      })
     }
     const onLeft = () => {
       setOver((prev) => ({

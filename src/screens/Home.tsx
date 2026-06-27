@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DIFFICULTIES, DIFFICULTY_ORDER, type Difficulty } from '../../shared/difficulty'
+import { loadRecorder } from '../analytics'
 import { getShowCountdown, saveShowCountdown } from '../identity'
 import { NameChip } from '../components/NameChip'
 import { RainbowText } from '../components/RainbowText'
@@ -18,9 +19,11 @@ export function Home({ name, onName, onSolo, onMultiplayer }: Props) {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [showCountdown, setShowCountdown] = useState(getShowCountdown)
 
+  useEffect(loadRecorder, [])
+
   return (
     <div className="flex w-full max-w-md flex-col gap-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-center gap-3">
         <img src="/logo.svg" alt="" draggable={false} className="h-12 w-12 sm:h-14 sm:w-14" />
         <h1 className="text-5xl font-black tracking-tight sm:text-6xl">Matchmoji</h1>
       </div>

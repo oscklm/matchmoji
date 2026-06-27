@@ -2,11 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { GameCore, FLIP_BACK_MS, type PublicView } from '../../shared/game'
 import { DIFFICULTIES, type Difficulty } from '../../shared/difficulty'
 import { comboConfetti } from '../ui/confetti'
+import { gameStarted, gameCompleted } from '../analytics'
 
 export interface SpOutcome {
   mode: 'sp'
   score: number
   reason: 'cleared' | 'timeup' | 'nomoves'
+  matched: number // pairs matched
+  pairs: number // total pairs
+  durationSec: number
 }
 
 export function useSingleplayer(difficulty: Difficulty, me: string, showCountdown = true) {
@@ -38,8 +42,21 @@ export function useSingleplayer(difficulty: Difficulty, me: string, showCountdow
   const finish = useCallback((reason: SpOutcome['reason']) => {
     if (overRef.current) return
     overRef.current = true
-    const score = coreRef.current!.scores.get(me) ?? 0
-    setOver({ mode: 'sp', score, reason })
+    const core = coreRef.current!
+    const score = core.scores.get(me) ?? 0
+    const matched = core.board.filter((c) => c.matched).length / 2
+    const startTime = endTimeRef.current - config.timer * 1000
+    const durationSec = Math.round((Date.now() - startTime) / 1000)
+    gameCompleted({
+      mode: 'sp',
+      difficulty,
+      outcome: reason,
+      won: reason === 'cleared',
+      score,
+      durationSec,
+    })
+    setOver({ mode: 'sp', score, reason, matched, pairs: config.pairs, durationSec })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me])
 
   useEffect(() => {
@@ -49,6 +66,7 @@ export function useSingleplayer(difficulty: Difficulty, me: string, showCountdow
       endTimeRef.current = end
       setEndTime(end)
       setCountdown(null)
+      gameStarted({ mode: 'sp', difficulty })
       return
     }
     const t = setTimeout(() => setCountdown((c) => (c === null ? null : c - 1)), 1000)

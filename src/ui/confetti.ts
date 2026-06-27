@@ -18,12 +18,13 @@ const TAILWIND_COLORS = [
 
 /** Fires a confetti burst inward from each side of the screen. */
 export function comboConfetti(combo: number) {
-  const particleCount = Math.min(60 + combo * 15, 160)
+  const particleCount = Math.min(30 + combo * 8, 90)
   const shared = {
     particleCount,
     spread: 70,
     startVelocity: 55,
     ticks: 200,
+    scalar: 1.4,
     colors: TAILWIND_COLORS,
     zIndex: 9999,
   }
@@ -34,10 +35,11 @@ export function comboConfetti(combo: number) {
 /** A bigger celebratory burst for winning — wide fan plus side cannons. */
 export function winConfetti() {
   confetti({
-    particleCount: 180,
+    particleCount: 90,
     spread: 120,
     startVelocity: 45,
     ticks: 250,
+    scalar: 1.4,
     origin: { x: 0.5, y: 0.6 },
     colors: TAILWIND_COLORS,
     zIndex: 9999,

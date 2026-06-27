@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DIFFICULTIES, type Difficulty } from '../../shared/difficulty'
+import { loadRecorder } from '../analytics'
 import type { MpPhase, PlayerInfo } from '../net/useMultiplayer'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -19,6 +20,8 @@ interface Props {
 
 export function Lobby({ phase, code, players, difficulty, defaultDifficulty, error, onCreate, onJoin, onBack }: Props) {
   const [joinCode, setJoinCode] = useState('')
+
+  useEffect(loadRecorder, [])
 
   if (phase === 'lobby') {
     return (
