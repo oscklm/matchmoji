@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { DIFFICULTIES, DIFFICULTY_ORDER, type Difficulty } from '../../shared/difficulty'
 import { loadRecorder } from '../analytics'
+import { getAllHighscores } from '../highscores'
 import { getShowCountdown, saveShowCountdown } from '../identity'
 import { NameChip } from '../components/NameChip'
 import { RainbowText } from '../components/RainbowText'
@@ -18,6 +19,7 @@ interface Props {
 export function Home({ name, onName, onSolo, onMultiplayer }: Props) {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [showCountdown, setShowCountdown] = useState(getShowCountdown)
+  const [highscores] = useState(getAllHighscores)
 
   useEffect(loadRecorder, [])
 
@@ -41,16 +43,29 @@ export function Home({ name, onName, onSolo, onMultiplayer }: Props) {
           {DIFFICULTY_ORDER.map((key) => {
             const d = DIFFICULTIES[key]
             const active = key === difficulty
+            const best = highscores[key]
+            const hasBest = best && (best.score > 0 || best.time > 0)
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => setDifficulty(key)}
-                className={`py-4 text-center text-lg font-black ${
+                className={`flex flex-col items-center justify-center gap-1 py-3 text-center text-lg font-black ${
                   active ? 'bg-black text-white' : 'border-2 border-black bg-white text-black'
                 }`}
               >
                 {d.rainbow ? <RainbowText text={d.label} /> : d.label}
+                {hasBest && (
+                  <span
+                    className={`text-xs font-black uppercase tracking-wide ${
+                      active ? 'text-neutral-300' : 'text-neutral-500'
+                    }`}
+                  >
+                    {best.score > 0 && `${best.score} pts`}
+                    {best.score > 0 && best.time > 0 && ' · '}
+                    {best.time > 0 && `${best.time}s`}
+                  </span>
+                )}
               </button>
             )
           })}
