@@ -1,0 +1,17 @@
+{
+  "name": "matchmoji-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "matchmoji",
+      "database_id": "19276ad6-9e23-4429-9623-468ab96287be"
+    }
+  ]
+}
