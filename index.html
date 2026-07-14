@@ -117,6 +117,7 @@
     padding: 0;
     min-height: 100%;
     background: var(--mat);
+    overscroll-behavior: none;
   }
   body {
     font-family: var(--font-body);
@@ -560,11 +561,19 @@
   .modal-overlay[hidden] { display: none; }
   .start-overlay {
     flex-direction: column;
+    justify-content: space-between;
     gap: 16px;
-    /* extra bottom padding lifts the centred stack by ~5% of the viewport */
-    padding-bottom: calc(20px + 10vh);
+    /* difficulty/best up top, tap-to-start down by the thumb */
+    padding-top: max(calc(16px + 7vh), env(safe-area-inset-top));
+    padding-bottom: max(calc(16px + 9vh), env(safe-area-inset-bottom));
     background: rgba(13, 20, 15, 0.985);
     cursor: pointer;
+  }
+  .start-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
   }
   body.mode-hard .start-overlay {
     background: rgba(30, 19, 9, 0.985);
@@ -579,7 +588,7 @@
     cursor: pointer;
   }
   .start-cta {
-    margin-bottom: clamp(20px, 5vh, 48px);
+    margin-bottom: clamp(30px, 9vh, 90px);
     appearance: none;
     background: transparent;
     border: 0;
@@ -1015,7 +1024,7 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    margin: 0;
+    margin: clamp(18px, 4vh, 40px) 0 0;
   }
   .start-best .sb-caption,
   .ov-caption {
@@ -1031,20 +1040,6 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    margin-bottom: clamp(20px, 5vh, 46px);
-  }
-  .mode-bubble-sub {
-    display: block;
-    margin-top: 3px;
-    font-family: var(--font-mono);
-    font-weight: 600;
-    font-size: 0.74rem;
-    letter-spacing: 0.12em;
-    text-transform: none;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink-on-card);
-    opacity: 0.6;
-    text-align: center;
   }
   .start-best .sb-score {
     display: inline-flex;
@@ -1249,16 +1244,18 @@
 </div>
 
 <div class="modal-overlay start-overlay" id="startOverlay">
-  <button type="button" class="start-cta" id="startBtn">Tap to start</button>
-  <div class="mode-group" id="modeGroup">
-    <span class="ov-caption" id="modeCaption">Difficulty</span>
-    <div class="mode-slider" id="modeSlider">
-      <input type="range" class="mode-range" id="modeRange" min="0" max="2" step="1" value="0" aria-labelledby="modeCaption">
-      <span class="mode-bubble" id="modeBubble"></span>
+  <div class="start-top">
+    <div class="mode-group" id="modeGroup">
+      <span class="ov-caption" id="modeCaption">Difficulty</span>
+      <div class="mode-slider" id="modeSlider">
+        <input type="range" class="mode-range" id="modeRange" min="0" max="2" step="1" value="0" aria-labelledby="modeCaption">
+        <span class="mode-bubble" id="modeBubble"></span>
+      </div>
     </div>
+    <p class="start-best" id="startBest"></p>
+    <button type="button" class="btn btn-kraft lb-btn-start" id="lbBtnStart">🏆 Leaderboard</button>
   </div>
-  <p class="start-best" id="startBest"></p>
-  <button type="button" class="btn btn-kraft lb-btn-start" id="lbBtnStart">🏆 Leaderboard</button>
+  <button type="button" class="start-cta" id="startBtn">Tap to start</button>
 </div>
 
 <div class="debug-bar" id="debugBar">
@@ -1350,6 +1347,13 @@
   var lbClose = document.getElementById("lbClose");
 
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // iOS Safari rubber-bands the page on fast taps/swipes, which wrecks quick
+  // card flipping — block touch panning except inside scrollable lists
+  document.addEventListener("touchmove", function (e) {
+    if (e.target.closest && e.target.closest(".lb-list")) return;
+    e.preventDefault();
+  }, { passive: false });
 
   var host = location.hostname;
   var isDev = location.protocol === "file:"
@@ -2142,10 +2146,6 @@
     modeRange.value = String(modeIndex());
     modeRange.setAttribute("aria-valuetext", mode.label);
     renderModeText(modeBubble, mode.label, mode.rainbow);
-    var sub = document.createElement("span");
-    sub.className = "mode-bubble-sub";
-    sub.textContent = (mode.pairs * 2) + " cards";
-    modeBubble.appendChild(sub);
     positionBubble();
   }
 
@@ -2196,13 +2196,13 @@
     ensureAudio();
     newRound(true);
   });
-  // only the "Tap to start" zone (top of the overlay) starts the game, so
-  // difficulty and leaderboard taps can't accidentally kick off a round
+  // only the "Tap to start" zone (bottom of the overlay, near the thumb)
+  // starts the game, so difficulty and leaderboard taps can't kick off a round
   startOverlay.addEventListener("click", function (e) {
     if (startOverlay.classList.contains("is-counting")) return;
     var onStartBtn = e.target === startBtn || startBtn.contains(e.target);
-    var inTopZone = e.target === startOverlay && e.clientY < window.innerHeight * 0.38;
-    if (!onStartBtn && !inTopZone) return;
+    var inBottomZone = e.target === startOverlay && e.clientY > window.innerHeight * 0.6;
+    if (!onStartBtn && !inBottomZone) return;
     ensureAudio();
     startCountdown();
   });
