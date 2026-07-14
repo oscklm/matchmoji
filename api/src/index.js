@@ -154,7 +154,7 @@ async function handleLeaderboard(url, env) {
   if (!MODES.has(mode)) return json(400, { error: "invalid_mode" });
   const playerId = url.searchParams.get("player");
 
-  const [top, totalRow] = await Promise.all([
+  const [top, totalRow, own] = await Promise.all([
     env.DB.prepare(
       "SELECT s.player_id, p.name, s.time_ms, s.plays FROM scores s JOIN players p ON p.id = s.player_id " +
         "WHERE s.mode = ?1 ORDER BY s.time_ms ASC, s.achieved_at ASC LIMIT ?2"
@@ -162,6 +162,14 @@ async function handleLeaderboard(url, env) {
       .bind(mode, TOP_N)
       .all(),
     env.DB.prepare("SELECT COUNT(*) AS total FROM scores WHERE mode = ?1").bind(mode).first(),
+    playerId
+      ? env.DB.prepare(
+          "SELECT s.time_ms, s.achieved_at, s.plays, p.name FROM scores s JOIN players p ON p.id = s.player_id " +
+            "WHERE s.player_id = ?1 AND s.mode = ?2"
+        )
+          .bind(playerId, mode)
+          .first()
+      : null,
   ]);
 
   const entries = top.results.map((row, i) => ({
@@ -173,21 +181,13 @@ async function handleLeaderboard(url, env) {
   }));
 
   let you = null;
-  if (playerId) {
-    const own = await env.DB.prepare(
-      "SELECT s.time_ms, s.achieved_at, s.plays, p.name FROM scores s JOIN players p ON p.id = s.player_id " +
-        "WHERE s.player_id = ?1 AND s.mode = ?2"
-    )
-      .bind(playerId, mode)
-      .first();
-    if (own) {
-      you = {
-        rank: await rankFor(env.DB, mode, own.time_ms, own.achieved_at),
-        name: own.name,
-        timeMs: own.time_ms,
-        plays: own.plays,
-      };
-    }
+  if (own) {
+    you = {
+      rank: await rankFor(env.DB, mode, own.time_ms, own.achieved_at),
+      name: own.name,
+      timeMs: own.time_ms,
+      plays: own.plays,
+    };
   }
 
   return json(200, { mode, total: totalRow.total, entries, you });
