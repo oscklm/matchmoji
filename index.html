@@ -231,6 +231,129 @@
     max-width: 34ch;
   }
 
+  .mode-label {
+    align-self: center;
+    margin: -8px 0 0;
+    font-family: var(--font-body);
+    font-weight: 800;
+    font-size: 0.74rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    transform: rotate(-1deg);
+  }
+  /* always holds its row so revealing it at kick-off can't nudge the board */
+  .mode-label { visibility: hidden; }
+  .mode-label.is-on { visibility: visible; }
+  .mode-label .rb {
+    display: inline-block;
+    color: hsl(0, 85%, 62%);
+    animation: rainbow-cycle 2.2s linear infinite;
+    animation-delay: calc(var(--i) * 0.11s);
+  }
+  @keyframes rainbow-cycle {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mode-label .rb { animation: none; }
+  }
+
+  .mode-slider {
+    --thumb: 38px;
+    --track-h: 13px;
+    --grip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 38'%3E%3Cg fill='%23fff' fill-opacity='0.92'%3E%3Crect x='13.4' y='13' width='2.8' height='12' rx='1.4'/%3E%3Crect x='17.6' y='13' width='2.8' height='12' rx='1.4'/%3E%3Crect x='21.8' y='13' width='2.8' height='12' rx='1.4'/%3E%3C/g%3E%3C/svg%3E");
+    position: relative;
+    width: min(300px, 80vw);
+    padding-bottom: 46px;
+    cursor: default;
+  }
+  .mode-range {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    height: var(--thumb);
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .mode-range::-webkit-slider-runnable-track {
+    height: var(--track-h);
+    margin-top: calc((var(--thumb) - var(--track-h)) / 2);
+    border-radius: 999px;
+    background: rgba(233, 224, 196, 0.26);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+  .mode-range::-moz-range-track {
+    height: var(--track-h);
+    border-radius: 999px;
+    background: rgba(233, 224, 196, 0.26);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+  .mode-range::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--thumb);
+    height: var(--thumb);
+    margin-top: calc((var(--track-h) - var(--thumb)) / 2);
+    border: 0;
+    border-radius: 50%;
+    background: var(--thread-deep) var(--grip) center / var(--thumb) var(--thumb) no-repeat;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28), 0 5px 12px var(--kraft-shadow);
+    transition: transform 0.12s ease, background-color 0.15s ease;
+  }
+  .mode-range::-moz-range-thumb {
+    width: var(--thumb);
+    height: var(--thumb);
+    border: 0;
+    border-radius: 50%;
+    background: var(--thread-deep) var(--grip) center / var(--thumb) var(--thumb) no-repeat;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28), 0 5px 12px var(--kraft-shadow);
+  }
+  .mode-range:active::-webkit-slider-thumb { transform: scale(0.94); }
+  .mode-range:focus { outline: none; }
+  .mode-range:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .mode-range:focus-visible::-moz-range-thumb { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .mode-bubble {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-50%);
+    padding: 8px 18px 9px;
+    border-radius: 5px;
+    background: var(--kraft);
+    color: var(--ink-on-card);
+    font-family: var(--font-body);
+    font-weight: 800;
+    font-size: clamp(0.9rem, 3.4vw, 1.05rem);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 3px 0 var(--kraft-edge), 0 5px 10px var(--kraft-shadow);
+    transition: left 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .mode-bubble::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    left: var(--notch, 50%);
+    transform: translateX(-50%);
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 8px solid var(--kraft);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mode-bubble { transition: none; }
+  }
+  .mode-bubble .rb {
+    display: inline-block;
+    color: hsl(0, 85%, 45%);
+    animation: rainbow-cycle 2.2s linear infinite;
+    animation-delay: calc(var(--i) * 0.11s);
+  }
+
   .hud {
     display: flex;
     flex-direction: column;
@@ -243,6 +366,7 @@
     gap: 22px;
   }
   .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat[hidden] { display: none; } /* beats the UA [hidden] rule that .stat's display would shadow */
   .stat-moves { text-align: right; align-items: flex-end; }
   .stat-label {
     font-family: var(--font-body);
@@ -437,10 +561,13 @@
   .start-overlay {
     flex-direction: column;
     gap: 16px;
+    /* extra bottom padding lifts the centred stack by ~5% of the viewport */
+    padding-bottom: calc(20px + 10vh);
     background: rgba(13, 20, 15, 0.85);
     cursor: pointer;
   }
   .start-cta {
+    margin-bottom: clamp(20px, 5vh, 48px);
     appearance: none;
     background: transparent;
     border: 0;
@@ -627,17 +754,27 @@
     gap: 8px;
     margin: 0;
   }
-  .start-best .sb-caption {
+  .start-best .sb-caption,
+  .ov-caption {
     font-family: var(--font-body);
     font-weight: 800;
-    font-size: 1.03rem;
+    font-size: clamp(1.2rem, 4.4vw, 1.45rem);
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
+  .mode-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: clamp(20px, 5vh, 46px);
+  }
   .start-best .sb-score {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: calc(6ch + 52px); /* 6 digits + the 26px side padding, so a real score can't resize it */
     padding: 7px 26px 9px;
     border-radius: 999px;
     background: rgba(219, 168, 71, 0.16);
@@ -648,6 +785,13 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     color: var(--gold);
+  }
+  /* no score yet: same box, drained of colour, so nothing shifts once one lands */
+  .start-best .sb-score.is-empty {
+    background: rgba(233, 224, 196, 0.07);
+    box-shadow: inset 0 0 0 1.5px rgba(233, 224, 196, 0.2);
+    color: var(--ink-soft);
+    opacity: 0.5;
   }
   .start-best[hidden] { display: none; }
 
@@ -764,13 +908,15 @@
     <h1>MatchMoji</h1>
   </header>
 
+  <p class="mode-label" id="modeLabel"></p>
+
   <div class="hud">
     <div class="hud-stats">
       <div class="stat timer-stat">
         <span class="stat-label">Time</span>
         <span class="stat-value" id="timeValue">0:55</span>
       </div>
-      <div class="stat stat-moves">
+      <div class="stat stat-moves" id="movesStat">
         <span class="stat-label">Moves</span>
         <span class="stat-value" id="movesValue">0</span>
       </div>
@@ -797,7 +943,14 @@
 
 <div class="modal-overlay start-overlay" id="startOverlay">
   <button type="button" class="start-cta" id="startBtn">Tap to start</button>
-  <p class="start-best" id="startBest" hidden></p>
+  <div class="mode-group" id="modeGroup">
+    <span class="ov-caption" id="modeCaption">Difficulty</span>
+    <div class="mode-slider" id="modeSlider">
+      <input type="range" class="mode-range" id="modeRange" min="0" max="2" step="1" value="0" aria-labelledby="modeCaption">
+      <span class="mode-bubble" id="modeBubble"></span>
+    </div>
+  </div>
+  <p class="start-best" id="startBest"></p>
 </div>
 
 <div class="debug-bar" id="debugBar">
@@ -812,7 +965,6 @@
   "use strict";
 
   var PAIR_COUNT = 10;
-  var TIME_LIMIT = 55;
   var FLIP_BACK_DELAY = 400;
   var MATCH_SETTLE_DELAY = 140;
   var MIN_FLIP_INTERVAL = 90;
@@ -822,7 +974,6 @@
   var POINTS_PER_MATCH = 100;
   var COMBO_STEP = 50;          // extra points per consecutive match beyond the first
   var TIME_BONUS_PER_SEC = 15;  // awarded on a win only
-  var MOVES_PENALTY_PER = 20;   // deducted per move made
 
   var EMOJI_POOL = [
     "🍎", "🍌", "🍇", "🍉", "🍕",
@@ -831,6 +982,29 @@
     "🌵", "🍄", "🎨", "🧩", "📎",
     "🪡", "🧵", "🪁", "🍭"
   ];
+
+  // deliberately look-alike faces — the Boomer pool
+  var FACE_POOL = [
+    "😀", "😃", "😄", "😁", "😆",
+    "😅", "😊", "🙂", "😉", "😌",
+    "😍", "😗", "😙", "😚", "😋",
+    "😛", "😜", "🤪", "😐", "😑"
+  ];
+
+  var MODES = [
+    { key: "easy", label: "Easy", time: 40, penalty: 20, faceRatio: 0,
+      bestKey: "matchmoji.best.v2" },
+    { key: "hard", label: "Hard", time: 25, penalty: 35, faceRatio: 0,
+      bestKey: "matchmoji.best.hard.v1" },
+    { key: "boomer", label: "Boomer", time: 20, penalty: 0, faceRatio: 0.7, rainbow: true,
+      bestKey: "matchmoji.best.boomer.v1" }
+  ];
+  var MODE_KEY = "matchmoji.mode.v1";
+
+  function findMode(key) {
+    for (var i = 0; i < MODES.length; i++) if (MODES[i].key === key) return MODES[i];
+    return MODES[0];
+  }
 
   var boardEl = document.getElementById("board");
   var timeValueEl = document.getElementById("timeValue");
@@ -849,30 +1023,73 @@
   var startBest = document.getElementById("startBest");
   var resultBadge = document.getElementById("resultBadge");
   var comboPop = document.getElementById("comboPop");
+  var modeLabel = document.getElementById("modeLabel");
+  var movesStat = document.getElementById("movesStat");
+  var modeSlider = document.getElementById("modeSlider");
+  var modeRange = document.getElementById("modeRange");
+  var modeBubble = document.getElementById("modeBubble");
   var debugWin = document.getElementById("debugWin");
   var debugPeek = document.getElementById("debugPeek");
 
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  var WARN_AT = 25;
-  var CRITICAL_AT = 10;
-  var BEST_KEY = "matchmoji.best.v2";
+  // no move penalty means the mode has no concept of moves, so don't count or show them
+  function usesMoves() { return mode.penalty > 0; }
+
+  // thresholds scale with the mode's clock so short rounds don't start in the red
+  function warnAt() { return Math.round(mode.time * 0.5); }
+  function criticalAt() { return Math.round(mode.time * 0.2); }
+
+  var MUTE_KEY = "matchmoji.muted.v1"
+
+  var mode = MODES[0];
+  try {
+    var savedMode = localStorage.getItem(MODE_KEY);
+    if (savedMode) mode = findMode(savedMode);
+  } catch (e) {}
 
   function getBest() {
     try {
-      var v = localStorage.getItem(BEST_KEY);
+      var v = localStorage.getItem(mode.bestKey);
       return v == null ? null : parseInt(v, 10);
     } catch (e) { return null; }
   }
+  function getIsMuted() {
+    try {
+      var v = localStorage.getItem(MUTE_KEY);
+      if (v == null || v == false) return false;
+      if (v == "true") return true;
+    } catch (e) {}
+  }
+  function setIsMuted(v) {
+    try { localStorage.setItem(MUTE_KEY, String(v)); } catch (e) {}
+  }
   function setBest(v) {
-    try { localStorage.setItem(BEST_KEY, String(v)); } catch (e) {}
+    try { localStorage.setItem(mode.bestKey, String(v)); } catch (e) {}
+  }
+  function setMode(next) {
+    mode = next;
+    try { localStorage.setItem(MODE_KEY, mode.key); } catch (e) {}
+  }
+
+  // renders text into per-letter spans so the rainbow can sweep through them
+  function renderModeText(el, text, rainbow) {
+    el.innerHTML = "";
+    if (!rainbow) { el.textContent = text; return; }
+    for (var i = 0; i < text.length; i++) {
+      var s = document.createElement("span");
+      s.className = "rb";
+      s.style.setProperty("--i", String(i));
+      s.textContent = text[i] === " " ? " " : text[i];
+      el.appendChild(s);
+    }
   }
 
   var deck = [];
   var flippedIndices = [];
   var matchedPairs = 0;
   var moves = 0;
-  var timeLeft = TIME_LIMIT;
+  var timeLeft = mode.time;
   var timerId = null;
   var boardLocked = false;
   var lastFlipAt = 0;
@@ -973,10 +1190,10 @@
     if (muted || !audioCtx || document.hidden) return;
     var freq = MUSIC_SCALE[musicIndex % MUSIC_SCALE.length];
     musicIndex += 1;
-    if (timeLeft <= CRITICAL_AT) {
+    if (timeLeft <= criticalAt()) {
       // tense, brighter double-tick as the clock runs out
       pluck(freq * 1.5, 0, 0.14, 0.06, "triangle");
-    } else if (timeLeft <= WARN_AT) {
+    } else if (timeLeft <= warnAt()) {
       pluck(freq, 0, 0.28, 0.05, "sine");
     } else {
       pluck(freq, 0, 0.34, 0.045, "sine");
@@ -985,6 +1202,7 @@
 
   function setMuted(next) {
     muted = next;
+    setIsMuted(next);
     soundBtn.setAttribute("aria-pressed", String(!muted));
     soundBtn.setAttribute("aria-label", muted ? "Unmute sound" : "Mute sound");
   }
@@ -1010,7 +1228,14 @@
 
   // ---------- game ----------
   function buildDeck() {
-    var chosen = shuffle(EMOJI_POOL.slice()).slice(0, PAIR_COUNT);
+    var chosen;
+    if (mode.faceRatio > 0) {
+      var faceCount = Math.round(PAIR_COUNT * mode.faceRatio);
+      chosen = shuffle(FACE_POOL.slice()).slice(0, faceCount)
+        .concat(shuffle(EMOJI_POOL.slice()).slice(0, PAIR_COUNT - faceCount));
+    } else {
+      chosen = shuffle(EMOJI_POOL.slice()).slice(0, PAIR_COUNT);
+    }
     var cards = chosen.concat(chosen).map(function (emoji, i) {
       return { emoji: emoji, matched: false, id: i };
     });
@@ -1053,11 +1278,11 @@
   function updateHud() {
     timeValueEl.textContent = formatTime(timeLeft);
     movesValueEl.textContent = String(moves);
-    var pct = Math.max(0, (timeLeft / TIME_LIMIT) * 100);
+    var pct = Math.max(0, (timeLeft / mode.time) * 100);
     timerFillEl.style.width = pct + "%";
-    var critical = timeLeft <= CRITICAL_AT && timeLeft > 0;
+    var critical = timeLeft <= criticalAt() && timeLeft > 0;
     timerFillEl.classList.toggle("is-critical", critical);
-    timerFillEl.classList.toggle("is-warning", !critical && timeLeft <= WARN_AT && timeLeft > 0);
+    timerFillEl.classList.toggle("is-warning", !critical && timeLeft <= warnAt() && timeLeft > 0);
   }
 
   function startTimer() {
@@ -1155,7 +1380,7 @@
     var rows = [{ label: "Matches", val: bd.matches }];
     if (bd.combo > 0) rows.push({ label: "Combo bonus", val: bd.combo });
     if (won) rows.push({ label: "Time bonus", val: bd.time });
-    rows.push({ label: "Moves penalty", val: -bd.penalty });
+    if (usesMoves()) rows.push({ label: "Moves penalty", val: -bd.penalty });
 
     var rowEls = rows.map(function (r) {
       var row = document.createElement("div");
@@ -1228,7 +1453,7 @@
       matches: matchPoints,
       combo: comboPoints,
       time: won ? timeLeft * TIME_BONUS_PER_SEC : 0,
-      penalty: moves * MOVES_PENALTY_PER
+      penalty: moves * mode.penalty
     };
     bd.total = Math.max(0, bd.matches + bd.combo + bd.time - bd.penalty);
 
@@ -1255,14 +1480,49 @@
 
   function updateStartBest() {
     var best = getBest();
-    if (best == null) {
-      startBest.hidden = true;
-      startBest.textContent = "";
-    } else {
-      startBest.hidden = false;
-      startBest.innerHTML = "<span class=\"sb-caption\">Highscore</span><span class=\"sb-score\">" + best + "</span>";
-    }
+    var empty = best == null;
+    startBest.hidden = false;
+    startBest.innerHTML = "<span class=\"sb-caption\">Highscore</span>"
+      + "<span class=\"sb-score" + (empty ? " is-empty" : "") + "\">"
+      + (empty ? "000000" : best) + "</span>";
   }
+
+  function modeIndex() {
+    for (var i = 0; i < MODES.length; i++) if (MODES[i].key === mode.key) return i;
+    return 0;
+  }
+
+  // park the bubble under the thumb, which travels only the track minus its own width.
+  // at the ends the bubble would hang off screen, so clamp it and slide the notch instead.
+  function positionBubble() {
+    var thumb = parseFloat(getComputedStyle(modeSlider).getPropertyValue("--thumb")) || 38;
+    var width = modeRange.offsetWidth;
+    if (!width) return;
+    var frac = MODES.length > 1 ? modeIndex() / (MODES.length - 1) : 0;
+    var thumbX = thumb / 2 + frac * (width - thumb);
+    var half = modeBubble.offsetWidth / 2;
+    var centre = half * 2 > width ? width / 2 : Math.min(Math.max(thumbX, half), width - half);
+    modeBubble.style.left = centre + "px";
+    modeBubble.style.setProperty("--notch", (thumbX - centre + half) + "px");
+  }
+
+  function renderModePicker() {
+    modeRange.max = String(MODES.length - 1);
+    modeRange.value = String(modeIndex());
+    modeRange.setAttribute("aria-valuetext", mode.label);
+    renderModeText(modeBubble, mode.label, mode.rainbow);
+    positionBubble();
+  }
+
+  modeRange.addEventListener("input", function () {
+    var next = MODES[parseInt(modeRange.value, 10)] || MODES[0];
+    if (next.key === mode.key) return;
+    ensureAudio();
+    setMode(next);
+    newRound(true);
+  });
+  modeSlider.addEventListener("click", function (e) { e.stopPropagation(); });
+  window.addEventListener("resize", positionBubble);
 
   function newRound(waitForStart) {
     clearInterval(timerId);
@@ -1270,7 +1530,7 @@
     flippedIndices = [];
     matchedPairs = 0;
     moves = 0;
-    timeLeft = TIME_LIMIT;
+    timeLeft = mode.time;
     combo = 0;
     matchPoints = 0;
     comboPoints = 0;
@@ -1279,14 +1539,19 @@
     confettiLayer.innerHTML = "";
     renderBoard();
     updateHud();
+    renderModeText(modeLabel, mode.label, mode.rainbow);
+    movesStat.hidden = !usesMoves();
     if (waitForStart) {
       boardLocked = true;
+      modeLabel.classList.remove("is-on");
       updateStartBest();
       startOverlay.hidden = false;
-      startBtn.focus();
-      announce("Press to play. Match all " + PAIR_COUNT + " pairs before time runs out.");
+      renderModePicker();
+      if (document.activeElement !== modeRange) startBtn.focus();
+      announce(mode.label + " mode. Press to play. Match all " + PAIR_COUNT + " pairs before time runs out.");
     } else {
       boardLocked = false;
+      modeLabel.classList.add("is-on");
       startOverlay.hidden = true;
       startTimer();
       announce("New round. Match all " + PAIR_COUNT + " pairs before time runs out.");
@@ -1309,6 +1574,7 @@
     ensureAudio();
     boardLocked = false;
     startOverlay.hidden = true;
+    modeLabel.classList.add("is-on");
     startTimer();
     announce("Go! Match all " + PAIR_COUNT + " pairs before time runs out.");
   });
