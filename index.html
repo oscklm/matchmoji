@@ -1411,6 +1411,13 @@
     umamiScript.defer = true;
     umamiScript.src = "https://analytics.oneguycloud.net/script.js";
     umamiScript.setAttribute("data-website-id", "d1a5f101-99b1-4556-ab82-9f4eaa3d8196");
+    umamiScript.onload = function () {
+      // reuse the leaderboard device id so returning players aren't counted
+      // as new unique visitors each day
+      try {
+        if (window.umami && umami.identify) umami.identify(getPlayer().id);
+      } catch (e) {}
+    };
     document.head.appendChild(umamiScript);
   }
   function track(event, data) {
