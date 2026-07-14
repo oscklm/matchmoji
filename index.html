@@ -966,8 +966,6 @@
 
   var PAIR_COUNT = 10;
   var FLIP_BACK_DELAY = 400;
-  var MATCH_SETTLE_DELAY = 140;
-  var MIN_FLIP_INTERVAL = 90;
   var TILTS = [-2, -1, 0.6, 1.8, -0.9, 2.2];
 
   // scoring (tweak freely)
@@ -996,7 +994,7 @@
       bestKey: "matchmoji.best.v2" },
     { key: "hard", label: "Hard", time: 25, penalty: 35, faceRatio: 0,
       bestKey: "matchmoji.best.hard.v1" },
-    { key: "boomer", label: "Boomer", time: 20, penalty: 0, faceRatio: 0.7, rainbow: true,
+    { key: "boomer", label: "Boomer", time: 23, penalty: 0, faceRatio: 0.7, rainbow: true,
       bestKey: "matchmoji.best.boomer.v1" }
   ];
   var MODE_KEY = "matchmoji.mode.v1";
@@ -1092,7 +1090,6 @@
   var timeLeft = mode.time;
   var timerId = null;
   var boardLocked = false;
-  var lastFlipAt = 0;
   var gameOver = false;
   var combo = 0;          // current consecutive-match streak
   var matchPoints = 0;
@@ -1301,9 +1298,6 @@
   function handleCardClick(index, btn) {
     if (gameOver || boardLocked) return;
     if (btn.classList.contains("is-flipped") || btn.classList.contains("is-matched")) return;
-    var now = Date.now();
-    if (now - lastFlipAt < MIN_FLIP_INTERVAL) return;
-    lastFlipAt = now;
 
     btn.classList.add("is-flipped");
     btn.setAttribute("aria-label", "Tile showing " + deck[index].emoji);
@@ -1313,47 +1307,42 @@
     flipSound();
 
     if (flippedIndices.length === 2) {
-      boardLocked = true;
       moves += 1;
       updateHud();
       var a = flippedIndices[0], b = flippedIndices[1];
       var cardA = boardEl.children[a], cardB = boardEl.children[b];
+      flippedIndices = [];
 
       if (deck[a].emoji === deck[b].emoji) {
-        setTimeout(function () {
-          cardA.classList.add("is-matched");
-          cardB.classList.add("is-matched");
-          cardA.disabled = true;
-          cardB.disabled = true;
-          matchedPairs += 1;
-          combo += 1;
-          matchPoints += POINTS_PER_MATCH;
-          var comboBonus = combo >= 2 ? (combo - 1) * COMBO_STEP : 0;
-          matchSound();
-          if (comboBonus > 0) {
-            comboPoints += comboBonus;
-            showCombo(combo, POINTS_PER_MATCH + comboBonus);
-            comboJingle(combo);
-          }
-          flippedIndices = [];
-          boardLocked = false;
-          if (matchedPairs === PAIR_COUNT) {
-            endGame(true);
-          } else {
-            announce("Matched " + matchedPairs + " of " + PAIR_COUNT
-              + (comboBonus > 0 ? ". Combo times " + combo + "!" : "."));
-          }
-        }, MATCH_SETTLE_DELAY);
+        cardA.classList.add("is-matched");
+        cardB.classList.add("is-matched");
+        cardA.disabled = true;
+        cardB.disabled = true;
+        matchedPairs += 1;
+        combo += 1;
+        matchPoints += POINTS_PER_MATCH;
+        var comboBonus = combo >= 2 ? (combo - 1) * COMBO_STEP : 0;
+        matchSound();
+        if (comboBonus > 0) {
+          comboPoints += comboBonus;
+          showCombo(combo, POINTS_PER_MATCH + comboBonus);
+          comboJingle(combo);
+        }
+        if (matchedPairs === PAIR_COUNT) {
+          endGame(true);
+        } else {
+          announce("Matched " + matchedPairs + " of " + PAIR_COUNT
+            + (comboBonus > 0 ? ". Combo times " + combo + "!" : "."));
+        }
       } else {
+        combo = 0;
+        mismatchSound();
         setTimeout(function () {
+          if (cardA.classList.contains("is-matched")) return;
           cardA.classList.remove("is-flipped");
           cardB.classList.remove("is-flipped");
           cardA.setAttribute("aria-label", "Face-down tile");
           cardB.setAttribute("aria-label", "Face-down tile");
-          combo = 0;
-          mismatchSound();
-          flippedIndices = [];
-          boardLocked = false;
         }, FLIP_BACK_DELAY);
       }
     }
