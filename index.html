@@ -957,9 +957,23 @@
     color: var(--ink);
     text-shadow: 0 3px 16px rgba(0, 0, 0, 0.6);
   }
-  /* countdown plays over the start overlay; its content steps aside */
+  /* countdown plays over the start overlay; its content steps aside and the
+     screen fades a shade darker so the start feels imminent */
+  .start-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #0a0f0b;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+    pointer-events: none;
+  }
   .start-overlay.is-counting { cursor: default; }
   .start-overlay.is-counting > * { visibility: hidden; }
+  .start-overlay.is-counting::after { opacity: 0.6; }
+  @media (prefers-reduced-motion: reduce) {
+    .start-overlay::after { transition: none; }
+  }
   .count-off[hidden] { display: none; }
   .count-off.pop { animation: count-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
   @keyframes count-pop {
@@ -1462,7 +1476,23 @@
   function submitScore(modeKey, timeMs, cb) {
     var p = getPlayer();
     if (!p.name) { cb(null); return; }
-    apiFetch("/v1/scores", { playerId: p.id, secret: p.secret, mode: modeKey, timeMs: timeMs }, cb);
+    apiFetch("/v1/scores", { playerId: p.id, secret: p.secret, mode: modeKey, timeMs: timeMs }, function (r) {
+      if (!r || r.status !== 403) { cb(r); return; }
+      // server doesn't know us (e.g. wiped DB) — re-register our saved name
+      // with the same id+secret, then retry once
+      claimName(p.name, function (cr) {
+        if (cr && cr.status === 200) {
+          apiFetch("/v1/scores", { playerId: p.id, secret: p.secret, mode: modeKey, timeMs: timeMs }, cb);
+          return;
+        }
+        if (cr && cr.status === 409) {
+          // someone else holds the name now; ask again on the next win
+          p.name = null;
+          savePlayer();
+        }
+        cb(null);
+      });
+    });
   }
   function fetchLeaderboard(modeKey, cb) {
     var p = getPlayer();
@@ -1480,7 +1510,7 @@
   }
 
   function afterResultShown(ms) {
-    if (debugRun) return;
+    if (debugRun) { showRank("Debug run, not counted", true); return; }
     var p = getPlayer();
     if (p.name) {
       submitScore(mode.key, ms, function (r) {
@@ -1589,7 +1619,7 @@
     pl.textContent = plays === 1 ? "1 play" : plays + " plays";
     var t = document.createElement("span");
     t.className = "lb-time";
-    t.textContent = formatElapsed(timeMs);
+    t.textContent = formatSeconds(timeMs);
     el.appendChild(r);
     el.appendChild(n);
     el.appendChild(pl);
@@ -1700,6 +1730,10 @@
     var s = Math.floor(ms / 1000);
     var cs = Math.floor((ms % 1000) / 10);
     return (s < 10 ? "0" : "") + s + ":" + (cs < 10 ? "0" : "") + cs;
+  }
+  // spelled-out for the leaderboard, where "28:97" would read as minutes — "28.97s"
+  function formatSeconds(ms) {
+    return (ms / 1000).toFixed(2) + "s";
   }
 
   function announce(text) {
