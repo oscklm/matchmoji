@@ -2,7 +2,6 @@
 <title>MatchMoji</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#243026">
-<script defer src="https://analytics.oneguycloud.net/script.js" data-website-id="d1a5f101-99b1-4556-ab82-9f4eaa3d8196"></script>
 <style>
   @font-face {
     font-family: "Caveat";
@@ -1406,8 +1405,16 @@
     } catch (e) { return null; }
   }
 
-  // ---------- analytics (self-hosted umami; no-op when blocked/offline) ----------
+  // ---------- analytics (self-hosted umami; prod only, no-op when blocked) ----------
+  if (!isDev) {
+    var umamiScript = document.createElement("script");
+    umamiScript.defer = true;
+    umamiScript.src = "https://analytics.oneguycloud.net/script.js";
+    umamiScript.setAttribute("data-website-id", "d1a5f101-99b1-4556-ab82-9f4eaa3d8196");
+    document.head.appendChild(umamiScript);
+  }
   function track(event, data) {
+    if (isDev) return;
     try {
       if (window.umami && umami.track) umami.track(event, data);
     } catch (e) {}
